@@ -6,6 +6,10 @@
 #include <Arduino.h>
 #include "config.h"
 #include "version.h"
+#include "sensor_ld2420.h"
+
+// Istanza sensore
+SensorLD2420 radar;
 
 void setup() {
     Serial.begin(115200);
@@ -18,16 +22,53 @@ void setup() {
     Serial.printf("  Build: %s %s\n", BUILD_DATE, BUILD_TIME);
     Serial.println("========================================");
 
+    // LED status
     pinMode(LED_STATUS_PIN, OUTPUT);
     digitalWrite(LED_STATUS_PIN, LOW);
 
-    Serial.println("[BOOT] Setup completato - sviluppo in corso...");
+    // Inizializza sensore radar
+    if (!radar.begin()) {
+        Serial.println("[BOOT] ERRORE: radar non inizializzato!");
+        // Blink veloce per segnalare errore
+        while (true) {
+            digitalWrite(LED_STATUS_PIN, HIGH);
+            delay(100);
+            digitalWrite(LED_STATUS_PIN, LOW);
+            delay(100);
+        }
+    }
+
+    Serial.println("[BOOT] Sistema pronto!");
+    Serial.println("[BOOT] In attesa rilevamenti radar...");
 }
 
 void loop() {
-    // Blink LED per segnalare che il firmware gira
-    digitalWrite(LED_STATUS_PIN, HIGH);
-    delay(500);
-    digitalWrite(LED_STATUS_PIN, LOW);
-    delay(500);
+    // Aggiorna letture radar
+    radar.update();
+
+    // Leggi dati
+    RadarData data = radar.getData();
+
+    // Stampa stato ogni secondo
+    static uint32_t lastPrint = 0;
+    if (millis() - lastPrint > 1000) {
+        lastPrint = millis();
+
+        if (data.detected) {
+            const char* zoneNames[] = {"NONE", "CRITICA", "MEDIA", "LONTANA"};
+            Serial.printf("[LOOP] RILEVATO! Dist:%dcm Zona:%s Consec:%d\n",
+                data.filtered_dist,
+                zoneNames[data.zone],
+                radar.getConsecutiveDetections());
+
+            // LED acceso se rilevato
+            digitalWrite(LED_STATUS_PIN, HIGH);
+        } else {
+            Serial.println("[LOOP] Nessuna presenza rilevata");
+            // LED spento
+            digitalWrite(LED_STATUS_PIN, LOW);
+        }
+    }
+
+    delay(10);
 }
