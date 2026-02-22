@@ -7,9 +7,37 @@
 #include "config.h"
 #include "version.h"
 #include "sensor_ld2420.h"
+#include "alarm_logic.h"
 
-// Istanza sensore
+// Istanze
 SensorLD2420 radar;
+AlarmLogic   alarmSys;
+
+// LED blink non-bloccante
+uint32_t lastBlink = 0;
+bool     ledState  = false;
+
+void updateLED() {
+    AlarmState state = alarmSys.getState();
+    uint32_t blinkMs = 0;
+
+    switch (state) {
+        case STATE_DISARMED:  blinkMs = 2000; break;  // lento
+        case STATE_ARMING:    blinkMs = 500;  break;  // medio
+        case STATE_ARMED:     blinkMs = 200;  break;  // veloce
+        case STATE_ALERT:     blinkMs = 50;   break;  // rapidissimo
+        case STATE_ALARM:
+            // Fisso acceso - gestito da alarm_logic
+            return;
+        case STATE_COOLDOWN:  blinkMs = 1000; break;  // medio-lento
+    }
+
+    if (millis() - lastBlink > blinkMs) {
+        lastBlink = millis();
+        ledState = !ledState;
+        digitalWrite(LED_STATUS_PIN, ledState);
+    }
+}
 
 void setup() {
     Serial.begin(115200);
@@ -29,7 +57,6 @@ void setup() {
     // Inizializza sensore radar
     if (!radar.begin()) {
         Serial.println("[BOOT] ERRORE: radar non inizializzato!");
-        // Blink veloce per segnalare errore
         while (true) {
             digitalWrite(LED_STATUS_PIN, HIGH);
             delay(100);
@@ -38,35 +65,43 @@ void setup() {
         }
     }
 
+    // Inizializza alarm logic
+    alarmSys.begin();
+
     Serial.println("[BOOT] Sistema pronto!");
-    Serial.println("[BOOT] In attesa rilevamenti radar...");
+    Serial.println("[BOOT] Comandi Serial: 'a'=arm  'd'=disarm  'r'=reset  's'=status");
 }
 
 void loop() {
-    // Aggiorna letture radar
+    // 1. Aggiorna radar
     radar.update();
-
-    // Leggi dati
     RadarData data = radar.getData();
 
-    // Stampa stato ogni secondo
-    static uint32_t lastPrint = 0;
-    if (millis() - lastPrint > 1000) {
-        lastPrint = millis();
+    // 2. Aggiorna state machine
+    alarmSys.update(data);
 
-        if (data.detected) {
-            const char* zoneNames[] = {"NONE", "CRITICA", "MEDIA", "LONTANA"};
-            Serial.printf("[LOOP] RILEVATO! Dist:%dcm Zona:%s Consec:%d\n",
-                data.filtered_dist,
-                zoneNames[data.zone],
-                radar.getConsecutiveDetections());
+    // 3. Aggiorna LED
+    updateLED();
 
-            // LED acceso se rilevato
-            digitalWrite(LED_STATUS_PIN, HIGH);
-        } else {
-            Serial.println("[LOOP] Nessuna presenza rilevata");
-            // LED spento
-            digitalWrite(LED_STATUS_PIN, LOW);
+    // 4. Comandi da Serial (per test senza web/MQTT)
+    if (Serial.available()) {
+        char cmd = Serial.read();
+        switch (cmd) {
+            case 'a': case 'A':
+                alarmSys.arm();
+                break;
+            case 'd': case 'D':
+                alarmSys.disarm();
+                break;
+            case 'r': case 'R':
+                alarmSys.reset();
+                break;
+            case 's': case 'S':
+                Serial.printf("[STATUS] Stato:%s Radar:%s Dist:%dcm\n",
+                    alarmSys.getStateName(),
+                    data.detected ? "RILEVATO" : "libero",
+                    data.filtered_dist);
+                break;
         }
     }
 
