@@ -8,6 +8,7 @@
 // VERSIONE FIRMWARE
 // ------------------------------------------------------------
 #define FIRMWARE_VERSION    "1.0.0"
+#define FW_VERSION          FIRMWARE_VERSION
 #define PROJECT_NAME        "AutoGuard"
 #define BUILD_DATE          __DATE__
 #define BUILD_TIME          __TIME__
