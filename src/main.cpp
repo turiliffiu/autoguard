@@ -1,6 +1,5 @@
 // ============================================================
 // AutoGuard - Antifurto Auto ESP32-C6 + HLK-LD2420
-// Main entry point
 // ============================================================
 #include <Arduino.h>
 #include "config.h"
@@ -10,16 +9,28 @@
 #include "mqtt_client.h"
 
 // ============================================================
-// Istanze globali
+// Oggetti semplici (sicuri come globali)
 // ============================================================
 SensorLD2420  radar;
 AlarmLogic    alarmSys;
-AutoGuardWeb  webServer(alarmSys, radar);
-AutoGuardMQTT mqttClient(alarmSys, radar);
+
+// ============================================================
+// Oggetti complessi → puntatori, init in setup()
+// ============================================================
+AutoGuardWeb*  webServer  = nullptr;
+AutoGuardMQTT* mqttClient = nullptr;
 
 // ============================================================
 // LED helpers
 // ============================================================
+#ifdef LED_ACTIVE_LOW
+  #define LED_ON  LOW
+  #define LED_OFF HIGH
+#else
+  #define LED_ON  HIGH
+  #define LED_OFF LOW
+#endif
+
 static uint32_t lastLedToggle = 0;
 static bool     ledState      = false;
 
@@ -27,15 +38,13 @@ void updateLED() {
     AlarmState state = alarmSys.getState();
     uint32_t now     = millis();
 
-    // ALARM → LED fisso acceso
     if (state == STATE_ALARM) {
-        digitalWrite(LED_STATUS_PIN, HIGH);
+        digitalWrite(LED_STATUS_PIN, LED_ON);
         ledState = true;
         return;
     }
 
-    // Frequenza blink per ogni stato
-    uint32_t interval = 2000; // DISARMED
+    uint32_t interval = 2000;
     switch (state) {
         case STATE_ARMING:   interval = 500;  break;
         case STATE_ARMED:    interval = 200;  break;
@@ -46,7 +55,7 @@ void updateLED() {
 
     if (now - lastLedToggle >= interval) {
         ledState = !ledState;
-        digitalWrite(LED_STATUS_PIN, ledState);
+        digitalWrite(LED_STATUS_PIN, ledState ? LED_ON : LED_OFF);
         lastLedToggle = now;
     }
 }
@@ -61,24 +70,24 @@ void handleSerial() {
         case 'a':
             alarmSys.arm();
             Serial.println("[CMD] arm");
-            mqttClient.publishStatus();
+            if (mqttClient) mqttClient->publishStatus();
             break;
         case 'd':
             alarmSys.disarm();
             Serial.println("[CMD] disarm");
-            mqttClient.publishStatus();
+            if (mqttClient) mqttClient->publishStatus();
             break;
         case 'r':
             alarmSys.reset();
             Serial.println("[CMD] reset");
-            mqttClient.publishStatus();
+            if (mqttClient) mqttClient->publishStatus();
             break;
         case 's':
             Serial.printf("[STATUS] Stato: %s | Radar: %dcm | WiFi: %s | MQTT: %s\n",
                 alarmSys.getStateName(),
                 radar.getData().filtered_dist,
-                webServer.isConnected() ? webServer.getIP().c_str() : "NON CONNESSO",
-                mqttClient.isConnected() ? "OK" : "OFFLINE");
+                (webServer && webServer->isConnected()) ? webServer->getIP().c_str() : "NO",
+                (mqttClient && mqttClient->isConnected()) ? "OK" : "OFFLINE");
             break;
         default: break;
     }
@@ -98,25 +107,27 @@ void setup() {
 
     // LED
     pinMode(LED_STATUS_PIN, OUTPUT);
-    digitalWrite(LED_STATUS_PIN, LOW);
+    digitalWrite(LED_STATUS_PIN, LED_OFF);
 
     // Radar
     Serial.println("[SETUP] Inizializzazione radar...");
     if (radar.begin()) {
         Serial.println("[SETUP] Radar OK");
     } else {
-        Serial.println("[SETUP] WARN: Radar non risponde (cavo?)");
+        Serial.println("[SETUP] WARN: Radar non risponde");
     }
 
-    // Web Server (WiFi + HTTP)
-    Serial.println("[SETUP] Connessione WiFi + Web Server...");
-    if (webServer.begin()) {
+    // Web Server
+    Serial.println("[SETUP] Avvio Web Server...");
+    webServer = new AutoGuardWeb(alarmSys, radar);
+    if (webServer->begin()) {
         Serial.printf("[SETUP] Web server: http://%s\n",
-            webServer.getIP().c_str());
+            webServer->getIP().c_str());
 
-        // MQTT (solo se WiFi disponibile)
-        Serial.println("[SETUP] Connessione MQTT...");
-        if (mqttClient.begin()) {
+        // MQTT (solo se WiFi ok)
+        Serial.println("[SETUP] Avvio MQTT...");
+        mqttClient = new AutoGuardMQTT(alarmSys, radar);
+        if (mqttClient->begin()) {
             Serial.println("[SETUP] MQTT OK");
         } else {
             Serial.println("[SETUP] WARN: MQTT non disponibile");
@@ -134,22 +145,15 @@ void setup() {
 // loop()
 // ============================================================
 void loop() {
-    // 1. Aggiorna radar
     radar.update();
 
-    // 2. Aggiorna logica allarme
     RadarData data = radar.getData();
     alarmSys.update(data);
 
-    // 3. Aggiorna LED
     updateLED();
 
-    // 4. Aggiorna web (riconnessione WiFi)
-    webServer.update();
+    if (webServer)  webServer->update();
+    if (mqttClient) mqttClient->update();
 
-    // 5. Aggiorna MQTT (publish + subscribe)
-    mqttClient.update();
-
-    // 6. Comandi seriali debug
     handleSerial();
 }

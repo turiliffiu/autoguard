@@ -95,6 +95,7 @@ void AutoGuardMQTT::update() {
     // Pubblica evento se ce n'è uno nuovo
     if (_alarmSys.hasNewEvent()) {
         AlarmEvent ev = _alarmSys.getLastEvent();
+        _alarmSys.clearNewEvent();
         publishStatus();
         _publishAlert(ev);
     }

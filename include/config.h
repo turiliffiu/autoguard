@@ -24,6 +24,7 @@
 // PIN LED DI STATO
 // ------------------------------------------------------------
 #define LED_STATUS_PIN      8       // LED integrato ESP32-C6
+#define LED_ACTIVE_LOW      1       // ESP32-C6: LOW=acceso
 
 // ------------------------------------------------------------
 // PIN BUZZER (opzionale)
@@ -34,18 +35,18 @@
 // ------------------------------------------------------------
 // WIFI
 // ------------------------------------------------------------
-#define WIFI_SSID           "TUO_SSID"
-#define WIFI_PASSWORD       "TUA_PASSWORD"
+#define WIFI_SSID           "TuriMesh"
+#define WIFI_PASSWORD       "C1p0ll1na.Rav10la"
 #define WIFI_TIMEOUT_MS     30000
 #define WIFI_HOSTNAME       "autoguard"
 
 // ------------------------------------------------------------
 // MQTT
 // ------------------------------------------------------------
-#define MQTT_BROKER         "192.168.1.10"
+#define MQTT_BROKER         "192.168.1.162"
 #define MQTT_PORT           1883
-#define MQTT_USER           ""
-#define MQTT_PASS           ""
+#define MQTT_USER           "mqtt_user"
+#define MQTT_PASS           "salvo"
 #define MQTT_CLIENT_ID      "autoguard-001"
 #define MQTT_RECONNECT_MS   5000
 #define MQTT_PUBLISH_MS     10000  // Publish radar ogni 10s
