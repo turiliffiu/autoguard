@@ -23,14 +23,9 @@
 // PIN LED DI STATO
 // ------------------------------------------------------------
 #define LED_STATUS_PIN      8       // LED integrato ESP32-C6
-// LED_STATUS patterns:
-//   DISARMED  → lampeggio lento (2s)
-//   ARMED     → lampeggio veloce (200ms)
-//   ALERT     → lampeggio rapidissimo (50ms)
-//   ALARM     → fisso acceso
 
 // ------------------------------------------------------------
-// PIN BUZZER (opzionale - attivo se ENABLE_BUZZER=1)
+// PIN BUZZER (opzionale)
 // ------------------------------------------------------------
 #define BUZZER_PIN          10
 #define ENABLE_BUZZER       0       // 0=disabilitato, 1=abilitato
@@ -54,40 +49,35 @@
 #define MQTT_RECONNECT_MS   5000
 
 // Topics publish (ESP32 → broker)
-#define MQTT_TOPIC_STATUS   "autoguard/status"      // stato sistema
-#define MQTT_TOPIC_SENSOR   "autoguard/sensor"      // dati radar (JSON)
-#define MQTT_TOPIC_ALERT    "autoguard/alert"       // evento allarme
-#define MQTT_TOPIC_LOG      "autoguard/log"         // log eventi
+#define MQTT_TOPIC_STATUS   "autoguard/status"
+#define MQTT_TOPIC_SENSOR   "autoguard/sensor"
+#define MQTT_TOPIC_ALERT    "autoguard/alert"
+#define MQTT_TOPIC_LOG      "autoguard/log"
 
 // Topics subscribe (broker → ESP32)
-#define MQTT_TOPIC_CMD      "autoguard/command"     // arm/disarm/reset
-#define MQTT_TOPIC_CFG      "autoguard/config"      // modifica soglie
+#define MQTT_TOPIC_CMD      "autoguard/command"
+#define MQTT_TOPIC_CFG      "autoguard/config"
 
 // ------------------------------------------------------------
-// RADAR HLK-LD2420 - Parametri rilevamento
+// RADAR HLK-LD2420
 // ------------------------------------------------------------
-#define RADAR_MIN_DIST_CM   20      // distanza minima rilevamento (cm)
-#define RADAR_MAX_DIST_CM   400     // distanza massima rilevamento (cm)
-#define RADAR_UPDATE_MS     50      // intervallo aggiornamento (20Hz)
+#define RADAR_MIN_DIST_CM   20
+#define RADAR_MAX_DIST_CM   400
+#define RADAR_UPDATE_MS     50      // 20Hz
 
-// Soglie per antifurto auto:
-// Zona 1 CRITICA: 0-100cm  (dentro l'abitacolo o sopra il cofano)
-// Zona 2 MEDIA:   100-250cm (intorno all'auto)
-// Zona 3 BASSA:   250-400cm (nei pressi dell'auto)
-#define ZONE_CRITICAL_MAX   100
-#define ZONE_MEDIUM_MAX     250
-#define ZONE_FAR_MAX        400
+// Zone rilevamento
+#define ZONE_CRITICAL_MAX   100     // 0-100cm:   dentro/sopra auto
+#define ZONE_MEDIUM_MAX     250     // 100-250cm: intorno auto
+#define ZONE_FAR_MAX        400     // 250-400cm: nei pressi auto
 
 // ------------------------------------------------------------
-// ALARM LOGIC - Temporizzazioni
+// ALARM LOGIC
 // ------------------------------------------------------------
-#define ARMING_DELAY_MS     5000    // ritardo armamento dopo comando (5s)
-#define PRE_ALARM_MS        3000    // warning prima di scattare allarme (3s)
+#define ARMING_DELAY_MS     5000    // ritardo armamento (5s)
+#define PRE_ALARM_MS        3000    // warning pre-allarme (3s)
 #define ALARM_DURATION_MS   30000   // durata allarme (30s)
-#define COOLDOWN_MS         10000   // pausa tra allarmi consecutivi (10s)
-
-// Numero rilevamenti consecutivi per confermare presenza
-#define DETECTIONS_TO_ALERT 5       // 5 rilevamenti @ 20Hz = 250ms
+#define COOLDOWN_MS         10000   // pausa tra allarmi (10s)
+#define DETECTIONS_TO_ALERT 5       // rilevamenti consecutivi per alert
 
 // ------------------------------------------------------------
 // WEB SERVER
@@ -96,7 +86,7 @@
 #define OTA_PASSWORD        "autoguard"
 
 // ------------------------------------------------------------
-// NVS (Salvataggio impostazioni in flash)
+// NVS
 // ------------------------------------------------------------
 #define NVS_NAMESPACE       "autoguard"
 
