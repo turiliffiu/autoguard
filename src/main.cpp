@@ -7,6 +7,7 @@
 #include "sensor_ld2420.h"
 #include "alarm_logic.h"
 #include "web_server.h"
+#include "mqtt_client.h"
 
 // ============================================================
 // Istanze globali
@@ -14,6 +15,7 @@
 SensorLD2420  radar;
 AlarmLogic    alarmSys;
 AutoGuardWeb  webServer(alarmSys, radar);
+AutoGuardMQTT mqttClient(alarmSys, radar);
 
 // ============================================================
 // LED helpers
@@ -56,14 +58,27 @@ void handleSerial() {
     if (!Serial.available()) return;
     char c = Serial.read();
     switch (c) {
-        case 'a': alarmSys.arm();    Serial.println("[CMD] arm");    break;
-        case 'd': alarmSys.disarm(); Serial.println("[CMD] disarm"); break;
-        case 'r': alarmSys.reset();  Serial.println("[CMD] reset");  break;
+        case 'a':
+            alarmSys.arm();
+            Serial.println("[CMD] arm");
+            mqttClient.publishStatus();
+            break;
+        case 'd':
+            alarmSys.disarm();
+            Serial.println("[CMD] disarm");
+            mqttClient.publishStatus();
+            break;
+        case 'r':
+            alarmSys.reset();
+            Serial.println("[CMD] reset");
+            mqttClient.publishStatus();
+            break;
         case 's':
-            Serial.printf("[STATUS] Stato: %s | Radar: %dcm | WiFi: %s\n",
+            Serial.printf("[STATUS] Stato: %s | Radar: %dcm | WiFi: %s | MQTT: %s\n",
                 alarmSys.getStateName(),
                 radar.getData().filtered_dist,
-                webServer.isConnected() ? webServer.getIP().c_str() : "NON CONNESSO");
+                webServer.isConnected() ? webServer.getIP().c_str() : "NON CONNESSO",
+                mqttClient.isConnected() ? "OK" : "OFFLINE");
             break;
         default: break;
     }
@@ -94,16 +109,24 @@ void setup() {
     }
 
     // Web Server (WiFi + HTTP)
-    Serial.println("[SETUP] Connessione WiFi...");
+    Serial.println("[SETUP] Connessione WiFi + Web Server...");
     if (webServer.begin()) {
-        Serial.printf("[SETUP] Web server attivo: http://%s\n",
+        Serial.printf("[SETUP] Web server: http://%s\n",
             webServer.getIP().c_str());
+
+        // MQTT (solo se WiFi disponibile)
+        Serial.println("[SETUP] Connessione MQTT...");
+        if (mqttClient.begin()) {
+            Serial.println("[SETUP] MQTT OK");
+        } else {
+            Serial.println("[SETUP] WARN: MQTT non disponibile");
+        }
     } else {
-        Serial.println("[SETUP] WARN: WiFi non disponibile, solo seriale");
+        Serial.println("[SETUP] WARN: WiFi non disponibile");
     }
 
     Serial.println("[SETUP] Completato!");
-    Serial.println("Comandi seriali: a=arm  d=disarm  r=reset  s=status");
+    Serial.println("Comandi: a=arm  d=disarm  r=reset  s=status");
     Serial.println("============================================");
 }
 
@@ -124,8 +147,9 @@ void loop() {
     // 4. Aggiorna web (riconnessione WiFi)
     webServer.update();
 
-    // 5. Comandi seriali debug
-    handleSerial();
+    // 5. Aggiorna MQTT (publish + subscribe)
+    mqttClient.update();
 
-    // Loop veloce - nessun delay fisso
+    // 6. Comandi seriali debug
+    handleSerial();
 }

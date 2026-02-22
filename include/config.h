@@ -48,6 +48,7 @@
 #define MQTT_PASS           ""
 #define MQTT_CLIENT_ID      "autoguard-001"
 #define MQTT_RECONNECT_MS   5000
+#define MQTT_PUBLISH_MS     10000  // Publish radar ogni 10s
 
 // Topics publish (ESP32 → broker)
 #define MQTT_TOPIC_STATUS   "autoguard/status"
