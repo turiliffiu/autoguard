@@ -94,7 +94,7 @@ void AlarmLogic::_handleArming(RadarData& data) {
     static uint32_t lastPrint = 0;
     if (millis() - lastPrint > 1000) {
         lastPrint = millis();
-        uint32_t remaining = (ARMING_DELAY_MS - elapsed) / 1000;
+        uint32_t remaining = (elapsed < ARMING_DELAY_MS) ? (ARMING_DELAY_MS - elapsed) / 1000 : 0;
         Serial.printf("[ALARM] Armamento in %lu secondi...\n", remaining);
     }
 
@@ -206,7 +206,7 @@ void AlarmLogic::_handleCooldown(RadarData& data) {
     static uint32_t lastPrint = 0;
     if (millis() - lastPrint > 5000) {
         lastPrint = millis();
-        uint32_t remaining = (COOLDOWN_MS - elapsed) / 1000;
+        uint32_t remaining = (elapsed < COOLDOWN_MS) ? (COOLDOWN_MS - elapsed) / 1000 : 0;
         Serial.printf("[ALARM] Cooldown: %lus rimanenti\n", remaining);
     }
 
