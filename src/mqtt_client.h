@@ -16,15 +16,9 @@ class AutoGuardMQTT {
 public:
     AutoGuardMQTT(AlarmLogic& alarmSys, SensorLD2420& radar);
 
-    // Inizializza e connette
     bool begin();
-
-    // Da chiamare nel loop
     void update();
-
-    // Pubblica stato corrente manualmente
     void publishStatus();
-
     bool isConnected();
 
 private:
@@ -33,26 +27,30 @@ private:
     AlarmLogic&     _alarmSys;
     SensorLD2420&   _radar;
 
-    uint32_t _lastPublish;      // Timer publish periodico
-    uint32_t _lastReconnect;    // Timer reconnect
+    uint32_t _lastPublish;
+    uint32_t _lastReconnect;
 
-    // Connessione al broker
     bool _connect();
 
-    // Callback messaggi in arrivo
+    // Discovery
+    void _publishDiscovery();
+    void _publishDiscoverySensor(const char* id, const char* name,
+                                  const char* stateTopic, const char* valueTemplate,
+                                  const char* unit, const char* devClass);
+    void _publishDiscoveryBinarySensor(const char* id, const char* name,
+                                        const char* stateTopic, const char* valueTemplate,
+                                        const char* devClass, const char* payloadOn,
+                                        const char* payloadOff);
+    void _publishDiscoveryButton(const char* id, const char* name,
+                                  const char* cmdTopic, const char* payload);
+
+    // Helpers
     static void _onMessage(char* topic, byte* payload, unsigned int len);
-    static AutoGuardMQTT* _instance; // per callback statica
+    static AutoGuardMQTT* _instance;
 
-    // Pubblica JSON radar
     void _publishRadar();
-
-    // Pubblica JSON alert/evento
     void _publishAlert(const AlarmEvent& ev);
-
-    // Costruisce JSON stato
     String _buildStatusJson();
-
-    // Costruisce JSON radar
     String _buildRadarJson();
 };
 
