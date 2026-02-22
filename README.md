@@ -89,26 +89,26 @@ J2P4 (RX/OT2) →    GPIO5 (TX)
                     ┌──────────────┐
                ┌───►│   DISARMED   │◄──────────────┐
                │    └──────┬───────┘               │
-               │           │ arm()                  │
+               │           │ arm()                 │
                │    ┌──────▼───────┐               │
-               │    │   ARMING     │ disarm()───────┤
+               │    │   ARMING     │ disarm()──────┤
                │    │  (5s delay)  │               │
                │    └──────┬───────┘               │
-               │           │ timeout                │
+               │           │ timeout               │
                │    ┌──────▼───────┐               │
-         disarm│    │    ARMED     │ disarm()───────┤
+         disarm│    │    ARMED     │ disarm()──────┤
                │    └──────┬───────┘               │
-               │           │ rilevamento            │
+               │           │ rilevamento           │
                │    ┌──────▼───────┐               │
                │    │    ALERT     │               │
                │    │  (3s warn)   │               │
                │    └──────┬───────┘               │
-               │           │ conferma               │
+               │           │ conferma              │
                │    ┌──────▼───────┐               │
                │    │    ALARM     │               │
                │    │  (30s)       │               │
                │    └──────┬───────┘               │
-               │           │ timeout                │
+               │           │ timeout               │
                │    ┌──────▼───────┐               │
                └────│   COOLDOWN   │               │
                     │  (10s)       │───────────────┘
