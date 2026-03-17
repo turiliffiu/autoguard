@@ -10,6 +10,8 @@ SensorLD2420::SensorLD2420() :
     _radarSerial(1),
     _ready(false),
     _consecutiveDetections(0),
+    _lastPrintedDist(-1),
+    _lastDetected(false),
     _filterIdx(0),
     _filterFull(false)
 {
@@ -86,7 +88,11 @@ void SensorLD2420::update() {
         _consecutiveDetections++;
 
 #if DEBUG_MODE
-        _printData();
+        if (_data.filtered_dist != _lastPrintedDist || _data.detected != _lastDetected) {
+            _printData();
+            _lastPrintedDist = _data.filtered_dist;
+            _lastDetected    = _data.detected;
+        }
 #endif
 
     } else {

@@ -53,6 +53,8 @@ private:
     bool            _ready;
     RadarData       _data;
     int             _consecutiveDetections;
+    int             _lastPrintedDist;
+    bool            _lastDetected;
 
     // Filtro media mobile
     static const int FILTER_SIZE = 5;
