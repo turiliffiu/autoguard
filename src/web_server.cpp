@@ -88,6 +88,10 @@ void AutoGuardWeb::_setupRoutes() {
         doc["detectionsToAlert"] = cfg.detectionsToAlert;
         doc["radarMinDist"]      = cfg.radarMinDist;
         doc["radarMaxDist"]      = cfg.radarMaxDist;
+        doc["alarmMinDist"]      = cfg.alarmMinDist;
+        doc["alarmZoneCritical"] = cfg.alarmZoneCritical;
+        doc["alarmZoneMedium"]   = cfg.alarmZoneMedium;
+        doc["alarmZoneFar"]      = cfg.alarmZoneFar;
         String json;
         serializeJson(doc, json);
         req->send(200, "application/json", json);
@@ -115,6 +119,10 @@ void AutoGuardWeb::_setupRoutes() {
             if (doc["detectionsToAlert"].is<int>()) cfg.detectionsToAlert = doc["detectionsToAlert"];
             if (doc["radarMinDist"].is<int>())      cfg.radarMinDist      = doc["radarMinDist"];
             if (doc["radarMaxDist"].is<int>())      cfg.radarMaxDist      = doc["radarMaxDist"];
+            if (doc["alarmMinDist"].is<int>())      cfg.alarmMinDist      = doc["alarmMinDist"];
+            if (doc["alarmZoneCritical"].is<bool>()) cfg.alarmZoneCritical = doc["alarmZoneCritical"];
+            if (doc["alarmZoneMedium"].is<bool>())   cfg.alarmZoneMedium   = doc["alarmZoneMedium"];
+            if (doc["alarmZoneFar"].is<bool>())      cfg.alarmZoneFar      = doc["alarmZoneFar"];
             configMgr.save(cfg);
             req->send(200, "application/json", "{\"ok\":true}");
         }
@@ -379,6 +387,13 @@ String AutoGuardWeb::_buildConfigHtml() {
     <div class="field"><label>Cooldown (ms)</label><input type="number" id="cooldownMs" min="1000" max="60000" step="1000"><div class="unit">default: 10000ms</div></div>
     <div class="field"><label>Rilevamenti per alert</label><input type="number" id="detectionsToAlert" min="1" max="50"><div class="unit">default: 5</div></div>
   </div>
+  <div class="card">
+    <h2>🚨 Soglie Allarme</h2>
+    <div class="field"><label>Distanza minima allarme (cm)</label><input type="number" id="alarmMinDist" min="0" max="200"><div class="unit">ignora rilevamenti sotto questa distanza (default: 30cm)</div></div>
+    <div class="field"><label style="display:flex;align-items:center;gap:10px;"><input type="checkbox" id="alarmZoneCritical" style="width:auto;"> Abilita zona CRITICA</label><div class="unit">zona 0 - CRITICAL_MAX cm (default: attiva)</div></div>
+    <div class="field"><label style="display:flex;align-items:center;gap:10px;"><input type="checkbox" id="alarmZoneMedium" style="width:auto;"> Abilita zona MEDIA</label><div class="unit">zona CRITICAL_MAX - MEDIUM_MAX cm (default: attiva)</div></div>
+    <div class="field"><label style="display:flex;align-items:center;gap:10px;"><input type="checkbox" id="alarmZoneFar" style="width:auto;"> Abilita zona LONTANA</label><div class="unit">zona MEDIUM_MAX - FAR_MAX cm (default: disattiva)</div></div>
+  </div>
 </div>
 <div style="max-width:900px;margin:20px auto;">
   <div class="btn-group">
@@ -402,6 +417,10 @@ async function loadConfig() {
     document.getElementById("detectionsToAlert").value = d.detectionsToAlert;
     document.getElementById("radarMinDist").value      = d.radarMinDist;
     document.getElementById("radarMaxDist").value      = d.radarMaxDist;
+    document.getElementById("alarmMinDist").value      = d.alarmMinDist;
+    document.getElementById("alarmZoneCritical").checked = d.alarmZoneCritical;
+    document.getElementById("alarmZoneMedium").checked   = d.alarmZoneMedium;
+    document.getElementById("alarmZoneFar").checked      = d.alarmZoneFar;
   } catch(e) { showFeedback("Errore caricamento!", false); }
 }
 async function saveConfig() {
@@ -416,6 +435,10 @@ async function saveConfig() {
     detectionsToAlert: parseInt(document.getElementById("detectionsToAlert").value),
     radarMinDist:      parseInt(document.getElementById("radarMinDist").value),
     radarMaxDist:      parseInt(document.getElementById("radarMaxDist").value),
+    alarmMinDist:      parseInt(document.getElementById("alarmMinDist").value),
+    alarmZoneCritical: document.getElementById("alarmZoneCritical").checked,
+    alarmZoneMedium:   document.getElementById("alarmZoneMedium").checked,
+    alarmZoneFar:      document.getElementById("alarmZoneFar").checked,
   };
   try {
     const r = await fetch("/api/config", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(cfg)});

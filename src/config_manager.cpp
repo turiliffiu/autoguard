@@ -33,6 +33,10 @@ void ConfigManager::_loadDefaults() {
     _cfg.detectionsToAlert = DETECTIONS_TO_ALERT;
     _cfg.radarMinDist      = RADAR_MIN_DIST_CM;
     _cfg.radarMaxDist      = RADAR_MAX_DIST_CM;
+    _cfg.alarmMinDist      = 30;    // ignora sotto 30cm
+    _cfg.alarmZoneCritical = true;
+    _cfg.alarmZoneMedium   = true;
+    _cfg.alarmZoneFar      = false;
 }
 
 void ConfigManager::begin() {
@@ -49,6 +53,10 @@ void ConfigManager::begin() {
     _cfg.detectionsToAlert = _prefs.getInt(KEY_DETECTIONS, _cfg.detectionsToAlert);
     _cfg.radarMinDist      = _prefs.getInt(KEY_RADAR_MIN,  _cfg.radarMinDist);
     _cfg.radarMaxDist      = _prefs.getInt(KEY_RADAR_MAX,  _cfg.radarMaxDist);
+    _cfg.alarmMinDist      = _prefs.getInt("alarm_min",    _cfg.alarmMinDist);
+    _cfg.alarmZoneCritical = _prefs.getBool("alarm_crit",  _cfg.alarmZoneCritical);
+    _cfg.alarmZoneMedium   = _prefs.getBool("alarm_med",   _cfg.alarmZoneMedium);
+    _cfg.alarmZoneFar      = _prefs.getBool("alarm_far",   _cfg.alarmZoneFar);
 
     _prefs.end();
 
@@ -70,6 +78,10 @@ bool ConfigManager::save(const AutoGuardConfig& cfg) {
     _prefs.putInt(KEY_DETECTIONS, cfg.detectionsToAlert);
     _prefs.putInt(KEY_RADAR_MIN,  cfg.radarMinDist);
     _prefs.putInt(KEY_RADAR_MAX,  cfg.radarMaxDist);
+    _prefs.putInt("alarm_min",    cfg.alarmMinDist);
+    _prefs.putBool("alarm_crit",  cfg.alarmZoneCritical);
+    _prefs.putBool("alarm_med",   cfg.alarmZoneMedium);
+    _prefs.putBool("alarm_far",   cfg.alarmZoneFar);
     _prefs.end();
 
     Serial.println("[CFG] Configurazione salvata in NVS");
@@ -94,6 +106,9 @@ void ConfigManager::print() {
     Serial.printf("[CFG] Timing: ARM=%ds PRE=%ds ALARM=%ds COOL=%ds\n",
         _cfg.armingDelayMs/1000, _cfg.preAlarmMs/1000,
         _cfg.alarmDurationMs/1000, _cfg.cooldownMs/1000);
+    Serial.printf("[CFG] Allarme: minDist=%dcm crit=%d med=%d far=%d\n",
+        _cfg.alarmMinDist, _cfg.alarmZoneCritical,
+        _cfg.alarmZoneMedium, _cfg.alarmZoneFar);
     Serial.printf("[CFG] Sensibilita: detect=%d radarMin=%dcm radarMax=%dcm\n",
         _cfg.detectionsToAlert, _cfg.radarMinDist, _cfg.radarMaxDist);
     Serial.println("[CFG] ------------------------------------");

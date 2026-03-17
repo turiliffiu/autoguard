@@ -19,6 +19,11 @@ struct AutoGuardConfig {
     int detectionsToAlert;
     int radarMinDist;
     int radarMaxDist;
+    // Soglie allarme
+    int alarmMinDist;       // distanza minima per scattare (cm)
+    bool alarmZoneCritical; // abilita zona critica
+    bool alarmZoneMedium;   // abilita zona media
+    bool alarmZoneFar;      // abilita zona lontana
 };
 
 class ConfigManager {

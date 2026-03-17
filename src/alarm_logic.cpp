@@ -118,21 +118,31 @@ void AlarmLogic::_handleArmed(RadarData& data) {
     // Zona CRITICA: scatta subito alert
     // Zona MEDIA/FAR: richiede N rilevamenti consecutivi
     bool triggerAlert = false;
+    AutoGuardConfig cfg = configMgr.get();
 
-    if (data.zone == ZONE_CRITICAL) {
+    // Ignora se sotto distanza minima configurata
+    if (data.distance_cm < cfg.alarmMinDist) {
+        return;
+    }
+
+    if (data.zone == ZONE_CRITICAL && cfg.alarmZoneCritical) {
         Serial.printf("[ALARM] ZONA CRITICA! Dist:%dcm\n", data.distance_cm);
         triggerAlert = true;
-    } else if (data.zone == ZONE_MEDIUM || data.zone == ZONE_FAR) {
-        // Richiedi configMgr.get().detectionsToAlert rilevamenti consecutivi
-        // Il contatore è gestito da SensorLD2420
-        // Qui leggiamo direttamente i dati
+    } else if (data.zone == ZONE_MEDIUM && cfg.alarmZoneMedium) {
         static int consecCount = 0;
         consecCount++;
-        if (consecCount >= configMgr.get().detectionsToAlert) {
-            Serial.printf("[ALARM] Presenza confermata! Zona:%d Dist:%dcm\n",
-                data.zone, data.distance_cm);
+        if (consecCount >= cfg.detectionsToAlert) {
+            Serial.printf("[ALARM] Presenza! Zona:MEDIUM Dist:%dcm\n", data.distance_cm);
             triggerAlert = true;
             consecCount = 0;
+        }
+    } else if (data.zone == ZONE_FAR && cfg.alarmZoneFar) {
+        static int consecCountFar = 0;
+        consecCountFar++;
+        if (consecCountFar >= cfg.detectionsToAlert) {
+            Serial.printf("[ALARM] Presenza! Zona:FAR Dist:%dcm\n", data.distance_cm);
+            triggerAlert = true;
+            consecCountFar = 0;
         }
     }
 
