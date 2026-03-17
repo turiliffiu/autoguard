@@ -7,6 +7,7 @@
 #include <Arduino.h>
 #include <LD2420.h>
 #include "config.h"
+#include "config_manager.h"
 
 // Zone di rilevamento
 enum RadarZone {

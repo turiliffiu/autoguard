@@ -35,18 +35,18 @@
 // ------------------------------------------------------------
 // WIFI
 // ------------------------------------------------------------
-#define WIFI_SSID                "TuriMesh"
-#define WIFI_PASSWORD            "C1p0ll1na.Rav10la"
+#define WIFI_SSID                "TUO_SSID"
+#define WIFI_PASSWORD            "TUA_PASSWORD"
 #define WIFI_TIMEOUT_MS          30000
 #define WIFI_HOSTNAME            "autoguard"
 
 // ------------------------------------------------------------
 // MQTT
 // ------------------------------------------------------------
-#define MQTT_BROKER              "192.168.1.162"
+#define MQTT_BROKER              "IP_HOME_ASSISTANT"
 #define MQTT_PORT                1883
-#define MQTT_USER                "mqtt_user"
-#define MQTT_PASS                "salvo"
+#define MQTT_USER                "TUO_MQTT_USER"
+#define MQTT_PASS                "TUA_MQTT_PASSWORD"
 #define MQTT_CLIENT_ID           "autoguard-001"
 #define MQTT_RECONNECT_MS        5000
 #define MQTT_PUBLISH_MS          10000   // Publish radar ogni 10s

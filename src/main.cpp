@@ -7,6 +7,7 @@
 #include "alarm_logic.h"
 #include "web_server.h"
 #include "mqtt_client.h"
+#include "config_manager.h"
 
 // ============================================================
 // Oggetti semplici (sicuri come globali)
@@ -108,6 +109,11 @@ void setup() {
     // LED
     pinMode(LED_STATUS_PIN, OUTPUT);
     digitalWrite(LED_STATUS_PIN, LED_OFF);
+
+    // Config Manager (NVS)
+    Serial.println("[SETUP] Caricamento configurazione...");
+    configMgr.begin();
+    delay(500); // Anti-brownout: stabilizza alimentazione
 
     // Radar
     Serial.println("[SETUP] Inizializzazione radar...");

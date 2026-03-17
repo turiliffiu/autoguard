@@ -11,6 +11,7 @@
 #include "config.h"
 #include "alarm_logic.h"
 #include "sensor_ld2420.h"
+#include "config_manager.h"
 
 class AutoGuardWeb {
 public:
@@ -45,6 +46,7 @@ private:
 
     // Genera HTML dashboard
     String _buildDashboardHtml();
+    String _buildConfigHtml();
 };
 
 #endif // WEB_SERVER_H

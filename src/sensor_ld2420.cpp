@@ -48,7 +48,7 @@ bool SensorLD2420::begin() {
     }
 
     // Configura range di rilevamento
-    _radar.setDistanceRange(RADAR_MIN_DIST_CM, RADAR_MAX_DIST_CM);
+    _radar.setDistanceRange(configMgr.get().radarMinDist, configMgr.get().radarMaxDist);
 
     // Configura intervallo aggiornamento
     _radar.setUpdateInterval(RADAR_UPDATE_MS);
@@ -56,7 +56,7 @@ bool SensorLD2420::begin() {
     _ready = true;
     Serial.println("[RADAR] Inizializzazione OK!");
     Serial.printf("[RADAR] Range: %dcm - %dcm\n",
-        RADAR_MIN_DIST_CM, RADAR_MAX_DIST_CM);
+        configMgr.get().radarMinDist, configMgr.get().radarMaxDist);
 
     return true;
 }
@@ -142,9 +142,9 @@ void SensorLD2420::resetDetections() {
 RadarZone SensorLD2420::_getZone(int distance_cm) {
     if (distance_cm <= 0) {
         return ZONE_NONE;
-    } else if (distance_cm <= ZONE_CRITICAL_MAX) {
+    } else if (distance_cm <= configMgr.get().zoneCriticalMax) {
         return ZONE_CRITICAL;
-    } else if (distance_cm <= ZONE_MEDIUM_MAX) {
+    } else if (distance_cm <= configMgr.get().zoneMediumMax) {
         return ZONE_MEDIUM;
     } else if (distance_cm <= ZONE_FAR_MAX) {
         return ZONE_FAR;

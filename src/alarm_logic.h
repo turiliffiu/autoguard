@@ -6,6 +6,7 @@
 
 #include <Arduino.h>
 #include "config.h"
+#include "config_manager.h"
 #include "sensor_ld2420.h"
 
 // ------------------------------------------------------------
@@ -49,6 +50,7 @@ public:
     void arm();
     void disarm();
     void reset();
+    void updateConfig();
 
     // Getters
     AlarmState  getState();

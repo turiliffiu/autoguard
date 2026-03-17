@@ -94,12 +94,12 @@ void AlarmLogic::_handleArming(RadarData& data) {
     static uint32_t lastPrint = 0;
     if (millis() - lastPrint > 1000) {
         lastPrint = millis();
-        uint32_t remaining = (elapsed < ARMING_DELAY_MS) ? (ARMING_DELAY_MS - elapsed) / 1000 : 0;
+        uint32_t remaining = (elapsed < configMgr.get().armingDelayMs) ? (configMgr.get().armingDelayMs - elapsed) / 1000 : 0;
         Serial.printf("[ALARM] Armamento in %lu secondi...\n", remaining);
     }
 
     // Countdown terminato -> passa ad ARMED
-    if (elapsed >= ARMING_DELAY_MS) {
+    if (elapsed >= configMgr.get().armingDelayMs) {
         Serial.println("[ALARM] Sistema ARMATO!");
         _setState(STATE_ARMED);
     }
@@ -123,12 +123,12 @@ void AlarmLogic::_handleArmed(RadarData& data) {
         Serial.printf("[ALARM] ZONA CRITICA! Dist:%dcm\n", data.distance_cm);
         triggerAlert = true;
     } else if (data.zone == ZONE_MEDIUM || data.zone == ZONE_FAR) {
-        // Richiedi DETECTIONS_TO_ALERT rilevamenti consecutivi
+        // Richiedi configMgr.get().detectionsToAlert rilevamenti consecutivi
         // Il contatore è gestito da SensorLD2420
         // Qui leggiamo direttamente i dati
         static int consecCount = 0;
         consecCount++;
-        if (consecCount >= DETECTIONS_TO_ALERT) {
+        if (consecCount >= configMgr.get().detectionsToAlert) {
             Serial.printf("[ALARM] Presenza confermata! Zona:%d Dist:%dcm\n",
                 data.zone, data.distance_cm);
             triggerAlert = true;
@@ -152,7 +152,7 @@ void AlarmLogic::_handleAlert(RadarData& data) {
     if (millis() - lastWarn > 500) {
         lastWarn = millis();
         Serial.printf("[ALARM] ⚠ PRE-ALLARME! Scatto in %lums\n",
-            elapsed < PRE_ALARM_MS ? PRE_ALARM_MS - elapsed : 0);
+            elapsed < configMgr.get().preAlarmMs ? configMgr.get().preAlarmMs - elapsed : 0);
     }
 
     // Se la presenza scompare durante pre-allarme -> torna ARMED
@@ -168,7 +168,7 @@ void AlarmLogic::_handleAlert(RadarData& data) {
     }
 
     // Timeout pre-allarme -> scatta allarme
-    if (elapsed >= PRE_ALARM_MS) {
+    if (elapsed >= configMgr.get().preAlarmMs) {
         Serial.println("[ALARM] 🚨 ALLARME ATTIVATO!");
         _activateAlarm();
         _setState(STATE_ALARM, &data);
@@ -189,7 +189,7 @@ void AlarmLogic::_handleAlarm(RadarData& data) {
     }
 
     // Timeout allarme -> passa a COOLDOWN
-    if (elapsed >= ALARM_DURATION_MS) {
+    if (elapsed >= configMgr.get().alarmDurationMs) {
         Serial.println("[ALARM] Timeout allarme - COOLDOWN");
         _deactivateAlarm();
         _setState(STATE_COOLDOWN);
@@ -206,12 +206,12 @@ void AlarmLogic::_handleCooldown(RadarData& data) {
     static uint32_t lastPrint = 0;
     if (millis() - lastPrint > 5000) {
         lastPrint = millis();
-        uint32_t remaining = (elapsed < COOLDOWN_MS) ? (COOLDOWN_MS - elapsed) / 1000 : 0;
+        uint32_t remaining = (elapsed < configMgr.get().cooldownMs) ? (configMgr.get().cooldownMs - elapsed) / 1000 : 0;
         Serial.printf("[ALARM] Cooldown: %lus rimanenti\n", remaining);
     }
 
     // Cooldown terminato -> torna ARMED
-    if (elapsed >= COOLDOWN_MS) {
+    if (elapsed >= configMgr.get().cooldownMs) {
         Serial.println("[ALARM] Cooldown terminato - torno ad ARMED");
         _setState(STATE_ARMED);
     }
@@ -300,7 +300,7 @@ uint32_t AlarmLogic::getStateElapsedMs() {
 uint32_t AlarmLogic::getArmingCountdown() {
     if (_state != STATE_ARMING) return 0;
     uint32_t elapsed = millis() - _stateStartMs;
-    return elapsed < ARMING_DELAY_MS ? (ARMING_DELAY_MS - elapsed) : 0;
+    return elapsed < configMgr.get().armingDelayMs ? (configMgr.get().armingDelayMs - elapsed) : 0;
 }
 
 uint32_t AlarmLogic::getAlarmElapsedMs() {
@@ -314,4 +314,11 @@ bool AlarmLogic::hasNewEvent() {
 
 void AlarmLogic::clearNewEvent() {
     _lastEvent.isNew = false;
+}
+
+// ============================================================
+// updateConfig() - Ricarica config da NVS
+// ============================================================
+void AlarmLogic::updateConfig() {
+    Serial.println("[ALARM] Configurazione aggiornata da NVS");
 }
